@@ -43,14 +43,11 @@ def plot_distribution(df, column):
     plt.tight_layout()
     plt.show()
 
-
-
 card_value = {
     '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7,
     '8': 8, '9': 9, '10': 10,
     'J': 11, 'Q': 12, 'K': 13, 'A': 14
 }
-
 
 # Razdvajanje PAIR na LOW_PAIR i HIGH_PAIR
 def classify_pair(row, col):
@@ -60,9 +57,6 @@ def classify_pair(row, col):
     ranks = [card[1:] for card in cards]
     pair_value = max([card_value[r] for r in ranks])
     return "LOW_PAIR" if pair_value <= 9 else "HIGH_PAIR"
-
-
-
 
 hand_rank = {
     "NOTHING": 0,
@@ -121,8 +115,6 @@ if __name__ == "__main__":
 
     worse_13_rows = df[df["rank3"] < df["rank1"]]
 
-
-
     # BRISANJE REDOVA GDE JE FLOP BOLJI OD TURN-a (rank2 < rank1)
     df_clean = df[df["rank2"] >= df["rank1"]]
 
@@ -134,16 +126,12 @@ if __name__ == "__main__":
 
     print("Novi broj redova:", df_clean.shape[0])
 
-
-    
     for col in ['result1', 'result2', 'result3']:
         df_clean[f'{col}_class'] = df_clean.apply(lambda row: classify_pair(row, col), axis=1)
-
 
     plot_distribution(df_clean, "result1_class")
     plot_distribution(df_clean, "result2_class")
     plot_distribution(df_clean, "result3_class")
-
 
     # PRIKAZ PIE CHARTA NA RIVERU UZ KLASIFIKOVAN HAND_STRENGTH
     df_clean["river_strength"] = df_clean["result3_class"].apply(strength_category)
@@ -165,7 +153,6 @@ if __name__ == "__main__":
     plt.title("River Hand Strength Distribution")
     plt.axis("equal")
     plt.show()
-
 
     # PRIKAZIVANJE MATRICE TRANZICIJE FLOP → RIVER
     # Mapiranje rank nazad u string
@@ -189,8 +176,6 @@ if __name__ == "__main__":
     plt.ylabel("Flop")
     plt.xlabel("River")
     plt.show()
-
-
 
     y = df_clean["river_strength"]  # Weak / Strong / Premium
     # X = df_clean[["rank1", "rank2"]]  # X = df_clean[["result1_class", "result2_class"]]
