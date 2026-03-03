@@ -1,0 +1,16 @@
+*.log
+*.tmp
+*.out
+
+notebooks/*.ipynb_checkpoints/
+
+__pycache__/
+*.pyc
+
+.DS_Store
+Thumbs.db
+
+env/
+venv/
+
+*.env

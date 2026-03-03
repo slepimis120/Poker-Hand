@@ -51,10 +51,9 @@ def plot_distribution(df, column, top_n=10):
     plt.tight_layout()
     plt.show()
 
-
 # ---------- Analysis ----------
 if __name__ == "__main__":
-    # Loading CSV with lists
+    # Load CSV with stringified lists
     converters = {
         "blinds_or_straddles": str_to_list,
         "starting_stacks": str_to_list,
@@ -66,20 +65,20 @@ if __name__ == "__main__":
     df = pd.read_csv(CSV_PATH, converters=converters)
     basic_info(df)
 
-    # Adding number of players, average stack/big blind
+    # Add number of players, average stack/big blind
     df["num_players"] = df["players"].apply(len)
     df["avg_stack"] = df["starting_stacks"].apply(lambda x: sum(x)/len(x) if isinstance(x, list) and len(x)>0 else 0)
     df["big_blind"] = df["blinds_or_straddles"].apply(lambda x: max(x) if isinstance(x, list) and len(x)>0 else 0)
     df["pot_size"] = df["winnings"].apply(lambda x: sum(x) if isinstance(x, list) else 0)
 
-    # Analysis of number of players, average stack/big blind
-    print('\nBroj igraca - distribution:', df["num_players"].value_counts())
+    # Analysis of number of players, average stack, and big blind
+    print('\nPlayer count distribution:', df["num_players"].value_counts())
     print("Big blind min/max/mean:", df["big_blind"].min(), df["big_blind"].max(), df["big_blind"].mean())
-    print("Prosecan stack min/max/mean:", df["avg_stack"].min(), df["avg_stack"].max(), df["avg_stack"].mean())
+    print("Average stack min/max/mean:", df["avg_stack"].min(), df["avg_stack"].max(), df["avg_stack"].mean())
 
     plot_distribution(df, "num_players")
 
-    # Action statistics
+    # Parse action stats
     rekap = df["actions"].apply(parse_actions).apply(pd.Series)
     for col in ["bet","raise","fold","showdown","aggressive"]:
         df[col] = rekap[col]
@@ -97,19 +96,17 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.show()
 
-    # Analysis of "blef" chances: hands that came to river without showdown, but had aggressive action
-    # (Ovo je gruba aproksimacija, ali daje bazu za heuristicki label "blef")
+    # Approximate "bluff" label: hands with at least one aggressive action but no showdown
     df["possible_bluff"] = ((df['showdown']==0) & (df['aggressive']>0)).astype(int)
-    print("Percentage of 'possible bluffs' hands: ", df['possible_bluff'].mean()*100, "%")
+    print("Percentage of 'possible bluff' hands: ", df['possible_bluff'].mean()*100, "%")
 
     plt.figure(figsize=(4,4))
     sns.barplot(x=["Non-bluff","Possible bluff"], y=df["possible_bluff"].value_counts(normalize=True).values*100)
-    plt.ylabel("% hands")
-    plt.title("Analysis of 'blef' hands (aggressive actions without showdown)")
+    plt.ylabel("% of hands")
+    plt.title("Approximate bluff hands (aggression without showdown)")
     plt.show()
 
-    # Additional feature: number of bets in hand; fold vs non-fold percentage and so on.
-    # => možeš graditi dalje oznake i pripremati dataset za ML
+    # Additional features can be engineered for ML from these columns
 
-    # Save for further steps (optional)
+    # Save for further use (optional)
     df.to_csv("../data/phh_analysis_output.csv", index=False)
