@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import classification_report, accuracy_score
+from sklearn.linear_model import LogisticRegression
 
 
 def load_data(file_path):
@@ -74,18 +75,18 @@ hand_rank = {
 def strength_category(hand_class):
     if hand_class in ["NOTHING", "LOW_PAIR"]:
         return "Weak"
-    elif hand_class in ["HIGH_PAIR", "TWO PAIR", "THREE OF A KIND"]:
+    elif hand_class in ["HIGH_PAIR", "TWO PAIR"]:
         return "Strong"
     else:
         return "Premium"
 
 if __name__ == "__main__":
 
-    df = load_data("./data/poker_dataset.csv")
+    df = load_data("./hands_analysis/data/poker_dataset.csv")
     basic_info(df)
-    plot_distribution(df, "result1")
-    plot_distribution(df, "result2")
-    plot_distribution(df, "result3")
+    # plot_distribution(df, "result1")
+    # plot_distribution(df, "result2")
+    # plot_distribution(df, "result3")
 
     df["rank1"] = df["result1"].map(hand_rank)
     df["rank2"] = df["result2"].map(hand_rank)
@@ -129,9 +130,9 @@ if __name__ == "__main__":
     for col in ['result1', 'result2', 'result3']:
         df_clean[f'{col}_class'] = df_clean.apply(lambda row: classify_pair(row, col), axis=1)
 
-    plot_distribution(df_clean, "result1_class")
-    plot_distribution(df_clean, "result2_class")
-    plot_distribution(df_clean, "result3_class")
+    # plot_distribution(df_clean, "result1_class")
+    # plot_distribution(df_clean, "result2_class")
+    # plot_distribution(df_clean, "result3_class")
 
     # PRIKAZ PIE CHARTA NA RIVERU UZ KLASIFIKOVAN HAND_STRENGTH
     df_clean["river_strength"] = df_clean["result3_class"].apply(strength_category)
@@ -175,17 +176,35 @@ if __name__ == "__main__":
     plt.title("Flop → River Transition Matrix (%)")
     plt.ylabel("Flop")
     plt.xlabel("River")
-    plt.show()
+    # plt.show()
+
+    df_clean = df_clean.copy()
+
+    df_clean["max_card"] = df_clean["hand"].apply(
+        lambda x: max(card_value[card[1:]] for card in x.split())
+    )
+
+    df_clean["same_suit"] = df_clean["hand"].apply(
+        lambda x: 1 if len(set(card[0] for card in x.split())) == 1 else 0
+    )
 
     y = df_clean["river_strength"]  # Weak / Strong / Premium
-    # X = df_clean[["rank1", "rank2"]]  # X = df_clean[["result1_class", "result2_class"]]
-    X = pd.get_dummies(df_clean[["result1_class", "result2_class"]])
+
+    X_cat = pd.get_dummies(df_clean[["result1_class", "result2_class"]])
+    X_num = df_clean[["max_card", "same_suit"]]
+
+    X = pd.concat([X_cat, X_num], axis=1)
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
 
-    model = RandomForestClassifier(random_state=42)
+    model = RandomForestClassifier(
+        n_estimators=200,
+        random_state=42,
+        n_jobs=-1
+    )
+
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
