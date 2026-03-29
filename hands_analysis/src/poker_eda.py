@@ -1,6 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from pathlib import Path
+
+import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -82,7 +85,9 @@ def strength_category(hand_class):
 
 if __name__ == "__main__":
 
-    df = load_data("./hands_analysis/data/poker_dataset.csv")
+    data_file = Path(__file__).resolve().parent.parent / "data" / "poker_dataset.csv"
+    df = load_data(data_file)
+    print("Initial Data:")
     basic_info(df)
     # plot_distribution(df, "result1")
     # plot_distribution(df, "result2")
